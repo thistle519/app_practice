@@ -33,10 +33,10 @@
       <tbody>
         <!-- ★STEP5 ToDo の要素をループ -->
         <tr
-          v-for="item in todos"
+          v-for="(item, index) in todos"
           v-bind:key="item.id"
           v-bind:class="{done:item.state}">
-          <th>{{ item.id }}</th>
+          <th>{{ index + 1}}</th>
           <td>{{ item.comment }}</td>
           <td class="state">
             <!-- ★STEP10 状態変更ボタン -->
