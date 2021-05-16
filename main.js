@@ -1,15 +1,5 @@
 /*import Firebase from 'firebase'
 import 'firebase/firestore'*/
-const myObject  = {
-  value :2,
-  get1 : ()=> {
-    console.log('this  : ', this.value)
-  },
-  get2 : function(){
-    console.log('this  : ', this.value)
-
-  }
-}
 
 const config = {
   apiKey: "AIzaSyDwwFG_FFqxUThtEAwqW0POmBcm737mjCo",
@@ -45,12 +35,18 @@ var todoStorage = {
       });
     return todos;
   },
-  save: function (todos) {
-    todos.forEach((todo) => {
-      db.collection("todos").add(todo);
-    });
-    console.log("save");
-  },
+  // save: function (todos) {
+  //   todos.forEach((todo) => {
+  //     db.collection("todos").add(todo);
+  //   });
+  //   console.log("save");
+  // },
+  //追加した時の処理
+  add: function (newTodo){
+    // db.collection("todos").add(newTodo)
+    // console.log("add")
+    db.collection("todos").doc(newTodo.id).set(newTodo)
+  }
 };
 
 // ★STEP1
@@ -104,14 +100,14 @@ new Vue({
   // ★STEP8
   watch: {
     // オプションを使う場合はオブジェクト形式にする
-    todos: {
+    /*todos: {
       // 引数はウォッチしているプロパティの変更後の値
       handler: function (todos) {
         todoStorage.save(todos);
       },
       // deep オプションでネストしているデータも監視できる
       deep: true,
-    },
+    },*/
   },
 
   // ★STEP9
@@ -132,11 +128,14 @@ new Vue({
       // { 新しいID, コメント, 作業状態 }
       // というオブジェクトを現在の todos リストへ push
       // 作業状態「state」はデフォルト「作業中=0」で作成
-      this.todos.push({
-        id: todoStorage.uid++,
+      let newId =  db.collection("todos").doc().id
+      let newTodo = {
+        id: newId,
         comment: comment.value,
         state: 0,
-      });
+      }
+      this.todos.push(newTodo);
+      todoStorage.add(newTodo);
       // フォーム要素を空にする
       comment.value = "";
     },
