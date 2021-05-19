@@ -1,6 +1,3 @@
-/*import Firebase from 'firebase'
-import 'firebase/firestore'*/
-
 const config = {
   apiKey: "AIzaSyDwwFG_FFqxUThtEAwqW0POmBcm737mjCo",
   authDomain: "todos-4261c.firebaseapp.com",
@@ -51,7 +48,9 @@ var todoStorage = {
       .update({ state: item.state })
       .then(() => {
         console.log("Document successfully updated!");
-      });
+      }).catch((error) => {
+        console.error("Error removing document: ", error);
+    });
   },
   remove: function (item) {
     db.collection("todos").doc(item.id).delete().then(() => {
@@ -139,6 +138,7 @@ new Vue({
     // ★STEP10 状態変更の処理
     doChangeState: function (item) {
       item.state = !item.state ? 1 : 0;
+      console.log(item.state)
       todoStorage.change(item);
     },
 
