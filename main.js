@@ -17,7 +17,6 @@ const db = firebase.firestore();
 
 // ★STEP2
 // https://jp.vuejs.org/v2/examples/todomvc.html
-var STORAGE_KEY = "todos-vuejs-demo";
 var todoStorage = {
   fetch: function () {
     var todos = [];
@@ -35,18 +34,30 @@ var todoStorage = {
       });
     return todos;
   },
-  // save: function (todos) {
-  //   todos.forEach((todo) => {
-  //     db.collection("todos").add(todo);
-  //   });
-  //   console.log("save");
-  // },
   //追加した時の処理
-  add: function (newTodo){
+  add: function (newTodo) {
     // db.collection("todos").add(newTodo)
     // console.log("add")
-    db.collection("todos").doc(newTodo.id).set(newTodo)
-  }
+    db.collection("todos")
+      .doc(newTodo.id)
+      .set(newTodo)
+      .then(() => {
+        console.log("Document successfully added!");
+      });
+  },
+  change: function (item) {
+    db.collection("todos")
+      .doc(item.id)
+      .update({ state: item.state })
+      .then(() => {
+        console.log("Document successfully updated!");
+      });
+  },
+  remove: function (item) {
+    db.collection("todos").doc(item.id).delete().then(() => {
+        console.log("Document successfully deleted!");
+      });
+  },
 };
 
 // ★STEP1
@@ -96,26 +107,11 @@ new Vue({
       // {0: '作業中', 1: '完了', -1: 'すべて'}
     },
   },
-
-  // ★STEP8
-  watch: {
-    // オプションを使う場合はオブジェクト形式にする
-    /*todos: {
-      // 引数はウォッチしているプロパティの変更後の値
-      handler: function (todos) {
-        todoStorage.save(todos);
-      },
-      // deep オプションでネストしているデータも監視できる
-      deep: true,
-    },*/
-  },
-
   // ★STEP9
   created() {
     // インスタンス作成時に自動的に fetch() する
     this.todos = todoStorage.fetch();
   },
-
   methods: {
     // ★STEP7 ToDo 追加の処理
     doAdd: function (event, value) {
@@ -128,12 +124,12 @@ new Vue({
       // { 新しいID, コメント, 作業状態 }
       // というオブジェクトを現在の todos リストへ push
       // 作業状態「state」はデフォルト「作業中=0」で作成
-      let newId =  db.collection("todos").doc().id
+      let newId = db.collection("todos").doc().id;
       let newTodo = {
         id: newId,
         comment: comment.value,
         state: 0,
-      }
+      };
       this.todos.push(newTodo);
       todoStorage.add(newTodo);
       // フォーム要素を空にする
@@ -143,12 +139,17 @@ new Vue({
     // ★STEP10 状態変更の処理
     doChangeState: function (item) {
       item.state = !item.state ? 1 : 0;
+      todoStorage.change(item);
     },
 
     // ★STEP10 削除の処理
     doRemove: function (item) {
-      var index = this.todos.indexOf(item);
+      let index = this.todos.indexOf(item);
       this.todos.splice(index, 1);
+      removeTodo = {
+        id: item.id,
+      };
+      todoStorage.remove(item);
     },
   },
 });
