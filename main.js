@@ -45,34 +45,61 @@ var todoStorage = {
   change: function (item) {
     db.collection("todos")
       .doc(item.id)
-      .update({ state: item.state })
+      .update({
+        state: item.state
+      })
       .then(() => {
         console.log("Document successfully updated!");
       }).catch((error) => {
         console.error("Error removing document: ", error);
-    });
+      });
   },
   remove: function (item) {
     db.collection("todos").doc(item.id).delete().then(() => {
-        console.log("Document successfully deleted!");
-      });
+      console.log("Document successfully deleted!");
+    });
   },
 };
+
+const categoryDoc = 'Aapl1E5km5EacvGoHfwT'
+var categoryManager = {
+  fetch: function () {
+    var categories = [];
+    db.collection("categories")
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          console.log(doc.id, " => ", (doc.data()));
+          categories.push(doc.data()['label'])
+        });
+      })
+      .catch((error) => {
+        console.log("Error getting documents: ", error);
+      });
+    return categories
+  },
+  add: function (newCategory){
+    db.collection("categories")
+    .add({add: newCategory})
+    .then(() => {
+      console.log("Document successfully added!");
+    });
+  }
+}
 
 // ★STEP1
 new Vue({
   el: "#app",
 
   data: {
-    // ★STEP5 local storage から 取得した ToDo のリスト
+    // ★STEP5 fire store から 取得した ToDo のリスト
     todos: [],
-    // ★STEP5 firestore から 取得した ToDo のリスト
-    // : [],
+    // ★STEP5 fire store から 取得した categories のリスト
+    categories: [],
     // ★STEP11 抽出しているToDoの状態
     current: -1,
     // ★STEP11＆STEP13 各状態のラベル
-    options: [
-      {
+    options: [{
         value: -1,
         label: "すべて",
       },
@@ -110,14 +137,19 @@ new Vue({
   created() {
     // インスタンス作成時に自動的に fetch() する
     this.todos = todoStorage.fetch();
+    this.categories = categoryManager.fetch();
   },
   methods: {
     // ★STEP7 ToDo 追加の処理
     doAdd: function (event, value) {
       // ref で名前を付けておいた要素を参照
-      var comment = this.$refs.comment;
+      let comment = this.$refs.comment;
+      let category = this.$refs.category;
       // 入力がなければ何もしないで return
       if (!comment.value.length) {
+        return;
+      }
+      if (!category.value.length) {
         return;
       }
       // { 新しいID, コメント, 作業状態 }
@@ -128,7 +160,13 @@ new Vue({
         id: newId,
         comment: comment.value,
         state: 0,
+        category: category.value
       };
+      if (this.categories.indexOf(category.value) === -1) {
+        console.log('beforepush' + this.categories)
+        this.categories.push(category.value)
+        categoryManager.add(category.value)
+      }
       this.todos.push(newTodo);
       todoStorage.add(newTodo);
       // フォーム要素を空にする
