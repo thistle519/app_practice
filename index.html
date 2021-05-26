@@ -11,14 +11,14 @@
     <h1>チュートリアルToDoリスト</h1>
 
     <!-- ★STEP11 -->
-    <label v-for="label in options" >
+    <label v-for="label in categories" >
       <input type="radio"
         v-model="current"
-        v-bind:value="label.value">{{ label.label }}
+        v-bind:value="label"
+        >{{ label }}
     </label>
-      
     <!-- ★STEP12 -->
-    （{{ computedTodos.length }} 件を表示）
+  （{{ computedTodos.length }} 件を表示）
 
     <!-- ★STEP4 リスト用テーブル -->
     <table>
