@@ -80,7 +80,7 @@ var categoryManager = {
   },
   add: function (newCategory){
     db.collection("categories")
-    .add({add: newCategory})
+    .add({label: newCategory})
     .then(() => {
       console.log("Document successfully added!");
     });
