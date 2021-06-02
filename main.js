@@ -22,19 +22,16 @@ var todoStorage = {
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
           console.log(doc.id, " => ", doc.data());
-          console.log(doc.id, " => ", JSON.stringify(doc.data()));
           todos.push(doc.data());
         });
       })
       .catch((error) => {
         console.log("Error getting documents: ", error);
       });
-    return todos;
+    return todos
   },
   //追加した時の処理
-  add: function (newTodo) {
-    // db.collection("todos").add(newTodo)
-    // console.log("add")
+  add: function (newTodo) {s
     db.collection("todos")
       .doc(newTodo.id)
       .set(newTodo)
@@ -65,12 +62,12 @@ const categoryDoc = 'Aapl1E5km5EacvGoHfwT'
 var categoryManager = {
   fetch: function () {
     var categories = [];
-    db.collection("categories")
+    db.collection("todos")
       .get()
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
           console.log(doc.id, " => ", (doc.data()));
-          categories.push(doc.data()['label'])
+          categories.push(doc.data()['category'])
         });
       })
       .catch((error) => {
@@ -96,22 +93,9 @@ new Vue({
     todos: [],
     // ★STEP5 fire store から 取得した categories のリスト
     categories: [],
+    counting: {},
     // ★STEP11 抽出しているToDoの状態
     current: -1,
-    // ★STEP11＆STEP13 各状態のラベル
-    options: [{
-        value: -1,
-        label: "すべて",
-      },
-      {
-        value: 0,
-        label: "作業中",
-      },
-      {
-        value: 1,
-        label: "完了",
-      },
-    ],
   },
 
   computed: {
@@ -186,7 +170,7 @@ new Vue({
       this.todos.splice(index, 1);
       removeTodo = {
         id: item.id,
-      };
+      },
       todoStorage.remove(item);
     },
   },
