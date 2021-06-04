@@ -11,6 +11,7 @@ const config = {
 firebase.initializeApp(config);
 firebase.analytics();
 const db = firebase.firestore();
+const LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif?a";
 
 // ★STEP2
 // https://jp.vuejs.org/v2/examples/todomvc.html
@@ -28,10 +29,10 @@ var todoStorage = {
       .catch((error) => {
         console.log("Error getting documents: ", error);
       });
-    return todos
+    return todos;
   },
   //追加した時の処理
-  add: function (newTodo) {s
+  add: function (newTodo) {
     db.collection("todos")
       .doc(newTodo.id)
       .set(newTodo)
@@ -43,22 +44,66 @@ var todoStorage = {
     db.collection("todos")
       .doc(item.id)
       .update({
-        state: item.state
+        state: item.state,
       })
       .then(() => {
         console.log("Document successfully updated!");
-      }).catch((error) => {
+      })
+      .catch((error) => {
         console.error("Error removing document: ", error);
       });
   },
   remove: function (item) {
-    db.collection("todos").doc(item.id).delete().then(() => {
-      console.log("Document successfully deleted!");
-    });
+    db.collection("todos")
+      .doc(item.id)
+      .delete()
+      .then(() => {
+        console.log("Document successfully deleted!");
+      });
+  },
+  // Saves a new message containing an image in Firebase.
+  // This first saves the image in Firebase storage.
+  saveImageMessage: function (file) {
+    let imageId = db.collection("images").doc().id;
+    let storageRef = firebase.storage().ref();
+    let ImagesRef = storageRef.child("images/" + imageId+'/'+file.name);
+    // 1 - We add a message with a loading icon that will get updated with the shared image.
+    firebase
+      .firestore()
+      .collection("images")
+      .doc(imageId)
+      .set({
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      })
+      .then(function () {
+        // 2 - Upload the image to Cloud Storage.
+        ImagesRef
+          .put(file)
+          .then(function (fileSnapshot) {
+            let messageRef = firebase
+              .firestore()
+              .collection("images")
+              .doc(imageId);
+            // 3 - Generate a public URL for the file.
+            return fileSnapshot.ref.getDownloadURL().then((url) => {
+              // 4 - Update the chat message placeholder with the image's URL.
+              return messageRef.update({
+                imageUrl: url,
+                storageUri: fileSnapshot.metadata.fullPath,
+              });
+            });
+          });
+      })
+      .catch(function (error) {
+        console.error(
+          "There was an error uploading a file to Cloud Storage:",
+          error
+        );
+      });
   },
 };
 
-const categoryDoc = 'Aapl1E5km5EacvGoHfwT'
+const categoryDoc = "Aapl1E5km5EacvGoHfwT";
 var categoryManager = {
   fetch: function () {
     var categories = [];
@@ -66,23 +111,23 @@ var categoryManager = {
       .get()
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-          console.log(doc.id, " => ", (doc.data()));
-          categories.push(doc.data()['category'])
+          console.log(doc.id, " => ", doc.data());
+          categories.push(doc.data()["category"]);
         });
       })
       .catch((error) => {
         console.log("Error getting documents: ", error);
       });
-    return categories
+    return categories;
   },
-  add: function (newCategory){
+  add: function (newCategory) {
     db.collection("categories")
-    .add({label: newCategory})
-    .then(() => {
-      console.log("Document successfully added!");
-    });
-  }
-}
+      .add({ label: newCategory })
+      .then(() => {
+        console.log("Document successfully added!");
+      });
+  },
+};
 
 // ★STEP1
 new Vue({
@@ -93,7 +138,6 @@ new Vue({
     todos: [],
     // ★STEP5 fire store から 取得した categories のリスト
     categories: [],
-    counting: {},
     // ★STEP11 抽出しているToDoの状態
     current: -1,
   },
@@ -144,12 +188,12 @@ new Vue({
         id: newId,
         comment: comment.value,
         state: 0,
-        category: category.value
+        category: category.value,
       };
       if (this.categories.indexOf(category.value) === -1) {
-        console.log('beforepush' + this.categories)
-        this.categories.push(category.value)
-        categoryManager.add(category.value)
+        console.log("beforepush" + this.categories);
+        this.categories.push(category.value);
+        categoryManager.add(category.value);
       }
       this.todos.push(newTodo);
       todoStorage.add(newTodo);
@@ -160,7 +204,7 @@ new Vue({
     // ★STEP10 状態変更の処理
     doChangeState: function (item) {
       item.state = !item.state ? 1 : 0;
-      console.log(item.state)
+      console.log(item.state);
       todoStorage.change(item);
     },
 
@@ -168,10 +212,15 @@ new Vue({
     doRemove: function (item) {
       let index = this.todos.indexOf(item);
       this.todos.splice(index, 1);
-      removeTodo = {
+      (removeTodo = {
         id: item.id,
-      },
-      todoStorage.remove(item);
+      }),
+        todoStorage.remove(item);
+    },
+    saveImage: function (event) {
+      console.log(event)
+      debugger;
+      todoStorage.saveImageMessage(event.target.files[0]);
     },
   },
 });
